@@ -150,7 +150,6 @@ public class WarningManager {
             return false;
         }
 
-        // remove all warnings; optionally remove entire player section
         config.set(base, null);
         save();
         return true;
@@ -167,7 +166,6 @@ public class WarningManager {
         listRaw.remove(indexZeroBased);
 
         if (listRaw.isEmpty()) {
-            // no more warnings for this player
             config.set(base, null);
         } else {
             config.set(listPath, listRaw);
@@ -217,13 +215,12 @@ public class WarningManager {
             } catch (IllegalArgumentException e) {
                 continue;
             }
-            int count = getWarnings(uuid).size();
+            int count = getWarningCount(uuid);
             if (count > 0) {
                 map.put(uuid, count);
             }
         }
 
-        // sort
         List<Map.Entry<UUID, Integer>> entries = new ArrayList<>(map.entrySet());
         entries.sort((a, b) -> Integer.compare(b.getValue(), a.getValue()));
 
@@ -233,6 +230,30 @@ public class WarningManager {
             result.put(e.getKey(), e.getValue());
             added++;
             if (added >= limit) break;
+        }
+
+        return result;
+    }
+
+    public synchronized int getWarningCount(UUID uuid) {
+        String base = "players." + uuid.toString();
+        String listPath = base + ".warnings";
+        List<Map<?, ?>> list = config.getMapList(listPath);
+        return list.size();
+    }
+
+    public synchronized Map<UUID, String> getAllWarnedPlayers() {
+        Map<UUID, String> result = new HashMap<>();
+        ConfigurationSection playersSec = config.getConfigurationSection("players");
+        if (playersSec == null) return result;
+
+        for (String key : playersSec.getKeys(false)) {
+            try {
+                UUID uuid = UUID.fromString(key);
+                String name = playersSec.getString(key + ".name", "Unknown");
+                result.put(uuid, name);
+            } catch (IllegalArgumentException ignored) {
+            }
         }
 
         return result;

@@ -12,6 +12,10 @@ warn-success: "%prefix%&aYou warned &e%player% &afor: &e%reason%"
 warn-notify: "%prefix%&e%staff% &cwarned &e%player% &cfor: &e%reason%"
 warn-received: "%prefix%&cYou have been warned for: &e%reason%"
 
+warns-header: "%prefix%&eWarnings for &c%player% &7(&f%count% total&7):"
+warns-entry: "&7#%number% &8- &f[%date%] &7by &e%staff%&7: &f%reason%"
+warns-footer: ""
+
 remove-warn-success: "%prefix%&aRemoved warning &e#%number% &afrom &e%player%&a."
 remove-warn-all-success: "%prefix%&aRemoved &eall &awarnings from &e%player%&a."
 invalid-warn-number: "%prefix%&cInvalid warning number."
@@ -19,10 +23,44 @@ invalid-warn-number: "%prefix%&cInvalid warning number."
 no-warnings-data: "%prefix%&cThere is no warning data yet."
 reload-success: "%prefix%&aConfiguration and messages reloaded."
 
+walsonwarn-help:
+  - "%prefix%&e/warn <player> <reason> &7- Warn a player."
+  - "%prefix%&e/warns <player> &7- View a player's warnings."
+  - "%prefix%&e/removewarn <player> <n|all> &7- Remove warnings."
+  - "%prefix%&e/walsonwarn panel &7- Open the warnings panel GUI."
+  - "%prefix%&e/walsonwarn reload &7- Reload config and messages."
+  - "%prefix%&e/walsonwarn help &7- Show this help."
+
 gui:
   warns-title: "&8Warnings &7» &c%player%"
   panel-title: "&8Warnings Panel"
+  recent-title: "&8Recent Warnings"
+  players-title: "&8Warned Players"
+  top-title: "&8Top Warned Players"
 
-  recent-warns-name: "&6Recent Warnings"
-  top-warned-name: "&6Top Warned Players"
-  open-warns-hint: "&7Click to open this player's warns."
+  panel-recent-name: "&6Recent Warnings"
+  panel-recent-lore:
+    - "&7View the latest warnings on the server."
+  panel-players-name: "&6Warned Players"
+  panel-players-lore:
+    - "&7View all players who have warnings."
+  panel-top-name: "&6Top Warned Players"
+  panel-top-lore:
+    - "&7View players with the most warnings."
+
+  recent-item-name: "&e%player%"
+  recent-item-lore:
+    - "&7Reason: &f%reason%"
+    - "&7By: &f%staff%"
+    - "&7Date: &f%date%"
+    - "&7Click to open this player's warns."
+
+  players-item-name: "&e%player%"
+  players-item-lore:
+    - "&7Warnings: &c%count%"
+    - "&7Click to open this player's warns."
+
+  top-item-name: "&e%player%"
+  top-item-lore:
+    - "&7Warnings: &c%count%"
+    - "&7Click to open this player's warns."

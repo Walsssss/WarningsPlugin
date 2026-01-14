@@ -2,6 +2,7 @@ package walson.me.walsondev.warningsplugin;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -10,7 +11,8 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
-import org.bukkit.Material;
+import org.bukkit.inventory.meta.SkullMeta;
+import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
@@ -32,6 +34,9 @@ public class WarningsPlugin extends JavaPlugin {
 
     private String warnsTitlePrefixStripped;
     private String panelTitleStripped;
+    private String recentTitleStripped;
+    private String playersTitleStripped;
+    private String topTitleStripped;
 
     private NamespacedKey panelTargetKey;
 
@@ -45,11 +50,9 @@ public class WarningsPlugin extends JavaPlugin {
 
         saveDefaultConfig();
         loadMessages();
-
         setupDateFormatter();
 
         this.warningManager = new WarningManager(this);
-
         this.panelTargetKey = new NamespacedKey(this, "panel-target");
 
         registerCommands();
@@ -103,7 +106,6 @@ public class WarningsPlugin extends JavaPlugin {
 
     private void loadMessages() {
         if (!getDataFolder().exists()) {
-            // ensure plugin data dir exists
             getDataFolder().mkdirs();
         }
 
@@ -114,7 +116,6 @@ public class WarningsPlugin extends JavaPlugin {
 
         messagesConfig = YamlConfiguration.loadConfiguration(messagesFile);
 
-        // update GUI title detection strings
         String warnsTitleConf = messagesConfig.getString("gui.warns-title", "&8Warnings &7» &c%player%");
         String warnsWithoutPlayer = warnsTitleConf.replace("%player%", "");
         String warnsColored = ChatColor.translateAlternateColorCodes('&', warnsWithoutPlayer);
@@ -123,6 +124,18 @@ public class WarningsPlugin extends JavaPlugin {
         String panelTitleConf = messagesConfig.getString("gui.panel-title", "&8Warnings Panel");
         String panelColored = ChatColor.translateAlternateColorCodes('&', panelTitleConf);
         this.panelTitleStripped = ChatColor.stripColor(panelColored);
+
+        String recentTitleConf = messagesConfig.getString("gui.recent-title", "&8Recent Warnings");
+        String recentColored = ChatColor.translateAlternateColorCodes('&', recentTitleConf);
+        this.recentTitleStripped = ChatColor.stripColor(recentColored);
+
+        String playersTitleConf = messagesConfig.getString("gui.players-title", "&8Warned Players");
+        String playersColored = ChatColor.translateAlternateColorCodes('&', playersTitleConf);
+        this.playersTitleStripped = ChatColor.stripColor(playersColored);
+
+        String topTitleConf = messagesConfig.getString("gui.top-title", "&8Top Warned Players");
+        String topColored = ChatColor.translateAlternateColorCodes('&', topTitleConf);
+        this.topTitleStripped = ChatColor.stripColor(topColored);
     }
 
     public void reloadAll() {
@@ -158,6 +171,33 @@ public class WarningsPlugin extends JavaPlugin {
         return msg;
     }
 
+    private String formatGuiString(String path, String def, Map<String, String> placeholders) {
+        String s = messagesConfig.getString(path, def);
+        if (s == null) s = def;
+        if (placeholders != null) {
+            for (Map.Entry<String, String> e : placeholders.entrySet()) {
+                s = s.replace(e.getKey(), e.getValue());
+            }
+        }
+        return ChatColor.translateAlternateColorCodes('&', s);
+    }
+
+    private List<String> formatGuiLore(String path, Map<String, String> placeholders) {
+        List<String> raw = messagesConfig.getStringList(path);
+        List<String> out = new ArrayList<>();
+        String prefix = messagesConfig.getString("prefix", "");
+        for (String line : raw) {
+            String s = line.replace("%prefix%", prefix);
+            if (placeholders != null) {
+                for (Map.Entry<String, String> e : placeholders.entrySet()) {
+                    s = s.replace(e.getKey(), e.getValue());
+                }
+            }
+            out.add(ChatColor.translateAlternateColorCodes('&', s));
+        }
+        return out;
+    }
+
     public String formatTimestamp(long millis) {
         return dateFormatter.format(Instant.ofEpochMilli(millis));
     }
@@ -172,6 +212,18 @@ public class WarningsPlugin extends JavaPlugin {
 
     public String getPanelTitleStripped() {
         return panelTitleStripped;
+    }
+
+    public String getRecentTitleStripped() {
+        return recentTitleStripped;
+    }
+
+    public String getPlayersTitleStripped() {
+        return playersTitleStripped;
+    }
+
+    public String getTopTitleStripped() {
+        return topTitleStripped;
     }
 
     public NamespacedKey getPanelTargetKey() {
@@ -227,45 +279,107 @@ public class WarningsPlugin extends JavaPlugin {
     }
 
     public void openPanelGui(Player viewer) {
-        int size = getConfig().getInt("gui.panel.size", 54);
-        if (size < 9 || size > 54 || size % 9 != 0) size = 54;
+        FileConfiguration cfg = getConfig();
+
+        int size = cfg.getInt("gui.panel.size", 27);
+        if (size < 9 || size > 54 || size % 9 != 0) size = 27;
 
         String titleConf = messagesConfig.getString("gui.panel-title", "&8Warnings Panel");
         String title = ChatColor.translateAlternateColorCodes('&', titleConf);
 
-        int recentLimit = getConfig().getInt("gui.panel.recent-warns-limit", 27);
-        int topLimit = getConfig().getInt("gui.panel.top-warned-limit", 9);
+        Inventory inv = Bukkit.createInventory(null, size, title);
 
-        List<Warning> recent = warningManager.getRecentWarnings(recentLimit);
-        Map<UUID, Integer> top = warningManager.getTopWarnCounts(topLimit);
+        // Recent button
+        int recentSlot = cfg.getInt("gui.panel.buttons.recent.slot", 11);
+        if (recentSlot >= 0 && recentSlot < size) {
+            String matName = cfg.getString("gui.panel.buttons.recent.material", "CLOCK");
+            Material mat = Material.matchMaterial(matName);
+            if (mat == null) mat = Material.CLOCK;
+
+            ItemStack item = new ItemStack(mat);
+            ItemMeta meta = item.getItemMeta();
+            meta.setDisplayName(formatGuiString("gui.panel-recent-name", "&6Recent Warnings", null));
+            meta.setLore(formatGuiLore("gui.panel-recent-lore", null));
+            item.setItemMeta(meta);
+            inv.setItem(recentSlot, item);
+        }
+
+        // Players button
+        int playersSlot = cfg.getInt("gui.panel.buttons.players.slot", 13);
+        if (playersSlot >= 0 && playersSlot < size) {
+            String matName = cfg.getString("gui.panel.buttons.players.material", "BOOK");
+            Material mat = Material.matchMaterial(matName);
+            if (mat == null) mat = Material.BOOK;
+
+            ItemStack item = new ItemStack(mat);
+            ItemMeta meta = item.getItemMeta();
+            meta.setDisplayName(formatGuiString("gui.panel-players-name", "&6Warned Players", null));
+            meta.setLore(formatGuiLore("gui.panel-players-lore", null));
+            item.setItemMeta(meta);
+            inv.setItem(playersSlot, item);
+        }
+
+        // Top button
+        int topSlot = cfg.getInt("gui.panel.buttons.top.slot", 15);
+        if (topSlot >= 0 && topSlot < size) {
+            String matName = cfg.getString("gui.panel.buttons.top.material", "PLAYER_HEAD");
+            Material mat = Material.matchMaterial(matName);
+            if (mat == null) mat = Material.PLAYER_HEAD;
+
+            ItemStack item = new ItemStack(mat);
+            ItemMeta meta = item.getItemMeta();
+            meta.setDisplayName(formatGuiString("gui.panel-top-name", "&6Top Warned Players", null));
+            meta.setLore(formatGuiLore("gui.panel-top-lore", null));
+            item.setItemMeta(meta);
+            inv.setItem(topSlot, item);
+        }
+
+        viewer.openInventory(inv);
+    }
+
+    public void openRecentWarnsGui(Player viewer) {
+        FileConfiguration cfg = getConfig();
+
+        int size = cfg.getInt("gui.recent.size", 54);
+        if (size < 9 || size > 54 || size % 9 != 0) size = 54;
+
+        int limit = cfg.getInt("gui.recent.limit", size);
+        if (limit <= 0 || limit > size) limit = size;
+
+        List<Warning> recent = warningManager.getRecentWarnings(limit);
+        if (recent.isEmpty()) {
+            viewer.sendMessage(getMessage("no-warnings-data"));
+            return;
+        }
+
+        String titleConf = messagesConfig.getString("gui.recent-title", "&8Recent Warnings");
+        String title = ChatColor.translateAlternateColorCodes('&', titleConf);
 
         Inventory inv = Bukkit.createInventory(null, size, title);
 
-        // Recent warns as papers
+        String matName = cfg.getString("gui.recent.material", "PAPER");
+        Material mat = Material.matchMaterial(matName);
+        if (mat == null) mat = Material.PAPER;
+
         int slot = 0;
         for (Warning w : recent) {
             if (slot >= inv.getSize()) break;
 
-            ItemStack item = new ItemStack(Material.PAPER);
+            ItemStack item = new ItemStack(mat);
             ItemMeta meta = item.getItemMeta();
 
-            String display = ChatColor.GOLD + w.getTargetName();
-            meta.setDisplayName(display);
+            Map<String, String> ph = new HashMap<>();
+            ph.put("%player%", w.getTargetName());
+            ph.put("%reason%", w.getReason());
+            ph.put("%staff%", w.getWarnerName());
+            ph.put("%date%", formatTimestamp(w.getTimestamp()));
 
-            List<String> lore = new ArrayList<>();
-            lore.add(ChatColor.GRAY + "Reason: " + ChatColor.WHITE + w.getReason());
-            lore.add(ChatColor.GRAY + "By: " + ChatColor.WHITE + w.getWarnerName());
-            lore.add(ChatColor.GRAY + "Date: " + ChatColor.WHITE + formatTimestamp(w.getTimestamp()));
+            meta.setDisplayName(formatGuiString("gui.recent-item-name", "&e" + w.getTargetName(), ph));
+            meta.setLore(formatGuiLore("gui.recent-item-lore", ph));
 
-            String hint = messagesConfig.getString("gui.open-warns-hint", "&7Click to open this player's warns.");
-            lore.add(ChatColor.translateAlternateColorCodes('&', hint));
-
-            meta.setLore(lore);
-
-            // store target uuid in PDC
             meta.getPersistentDataContainer().set(
                     panelTargetKey,
-                    org.bukkit.persistence.PersistentDataType.STRING,
+                    PersistentDataType.STRING,
                     w.getTargetUuid().toString()
             );
 
@@ -273,19 +387,99 @@ public class WarningsPlugin extends JavaPlugin {
             inv.setItem(slot++, item);
         }
 
-        // Top warned players as heads (start at bottom row)
-        int topStart = Math.max(size - 9, slot + 1);
-        int used = 0;
+        viewer.openInventory(inv);
+    }
+
+    public void openPlayersGui(Player viewer) {
+        FileConfiguration cfg = getConfig();
+
+        int size = cfg.getInt("gui.players.size", 54);
+        if (size < 9 || size > 54 || size % 9 != 0) size = 54;
+
+        Map<UUID, String> players = warningManager.getAllWarnedPlayers();
+        if (players.isEmpty()) {
+            viewer.sendMessage(getMessage("no-warnings-data"));
+            return;
+        }
+
+        String titleConf = messagesConfig.getString("gui.players-title", "&8Warned Players");
+        String title = ChatColor.translateAlternateColorCodes('&', titleConf);
+
+        Inventory inv = Bukkit.createInventory(null, size, title);
+
+        String matName = cfg.getString("gui.players.material", "PLAYER_HEAD");
+        Material mat = Material.matchMaterial(matName);
+        if (mat == null) mat = Material.PLAYER_HEAD;
+
+        List<Map.Entry<UUID, String>> list = new ArrayList<>(players.entrySet());
+        list.sort(Comparator.comparing(e -> e.getValue().toLowerCase(Locale.ROOT)));
+
+        int slot = 0;
+        for (Map.Entry<UUID, String> entry : list) {
+            if (slot >= inv.getSize()) break;
+
+            UUID uuid = entry.getKey();
+            String name = entry.getValue();
+            int count = warningManager.getWarningCount(uuid);
+
+            ItemStack item = new ItemStack(mat);
+            ItemMeta meta = item.getItemMeta();
+
+            if (mat == Material.PLAYER_HEAD && meta instanceof SkullMeta skullMeta) {
+                skullMeta.setOwningPlayer(Bukkit.getOfflinePlayer(uuid));
+                meta = skullMeta;
+            }
+
+            Map<String, String> ph = new HashMap<>();
+            ph.put("%player%", name);
+            ph.put("%count%", String.valueOf(count));
+
+            meta.setDisplayName(formatGuiString("gui.players-item-name", "&e" + name, ph));
+            meta.setLore(formatGuiLore("gui.players-item-lore", ph));
+
+            meta.getPersistentDataContainer().set(
+                    panelTargetKey,
+                    PersistentDataType.STRING,
+                    uuid.toString()
+            );
+
+            item.setItemMeta(meta);
+            inv.setItem(slot++, item);
+        }
+
+        viewer.openInventory(inv);
+    }
+
+    public void openTopPlayersGui(Player viewer) {
+        FileConfiguration cfg = getConfig();
+
+        int size = cfg.getInt("gui.top.size", 54);
+        if (size < 9 || size > 54 || size % 9 != 0) size = 54;
+
+        int limit = cfg.getInt("gui.top.limit", size);
+        if (limit <= 0 || limit > size) limit = size;
+
+        Map<UUID, Integer> top = warningManager.getTopWarnCounts(limit);
+        if (top.isEmpty()) {
+            viewer.sendMessage(getMessage("no-warnings-data"));
+            return;
+        }
+
+        String titleConf = messagesConfig.getString("gui.top-title", "&8Top Warned Players");
+        String title = ChatColor.translateAlternateColorCodes('&', titleConf);
+
+        Inventory inv = Bukkit.createInventory(null, size, title);
+
+        String matName = cfg.getString("gui.top.material", "PLAYER_HEAD");
+        Material mat = Material.matchMaterial(matName);
+        if (mat == null) mat = Material.PLAYER_HEAD;
+
+        int slot = 0;
         for (Map.Entry<UUID, Integer> entry : top.entrySet()) {
-            if (topStart + used >= inv.getSize()) break;
+            if (slot >= inv.getSize()) break;
 
             UUID uuid = entry.getKey();
             int count = entry.getValue();
-
-            ItemStack head = new ItemStack(Material.PLAYER_HEAD);
-            org.bukkit.inventory.meta.SkullMeta meta =
-                    (org.bukkit.inventory.meta.SkullMeta) head.getItemMeta();
-            meta.setOwningPlayer(Bukkit.getOfflinePlayer(uuid));
 
             String name = warningManager.getLastKnownName(uuid);
             if (name == null) {
@@ -293,25 +487,29 @@ public class WarningsPlugin extends JavaPlugin {
                 if (name == null) name = "Unknown";
             }
 
-            meta.setDisplayName(ChatColor.GOLD + name);
+            ItemStack item = new ItemStack(mat);
+            ItemMeta meta = item.getItemMeta();
 
-            List<String> lore = new ArrayList<>();
-            lore.add(ChatColor.GRAY + "Warnings: " + ChatColor.RED + count);
-            String hint = messagesConfig.getString("gui.open-warns-hint", "&7Click to open this player's warns.");
-            lore.add(ChatColor.translateAlternateColorCodes('&', hint));
-            meta.setLore(lore);
+            if (mat == Material.PLAYER_HEAD && meta instanceof SkullMeta skullMeta) {
+                skullMeta.setOwningPlayer(Bukkit.getOfflinePlayer(uuid));
+                meta = skullMeta;
+            }
+
+            Map<String, String> ph = new HashMap<>();
+            ph.put("%player%", name);
+            ph.put("%count%", String.valueOf(count));
+
+            meta.setDisplayName(formatGuiString("gui.top-item-name", "&e" + name, ph));
+            meta.setLore(formatGuiLore("gui.top-item-lore", ph));
 
             meta.getPersistentDataContainer().set(
                     panelTargetKey,
-                    org.bukkit.persistence.PersistentDataType.STRING,
+                    PersistentDataType.STRING,
                     uuid.toString()
             );
 
-            head.setItemMeta(meta);
-
-            inv.setItem(topStart + used, head);
-            used++;
-            if (used >= topLimit) break;
+            item.setItemMeta(meta);
+            inv.setItem(slot++, item);
         }
 
         viewer.openInventory(inv);
@@ -323,7 +521,6 @@ public class WarningsPlugin extends JavaPlugin {
         return text.substring(0, maxLength - 3) + "...";
     }
 
-    // Convenience for saving messages if you ever modify them at runtime
     public void saveMessages() {
         try {
             messagesConfig.save(messagesFile);

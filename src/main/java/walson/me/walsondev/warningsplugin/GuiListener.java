@@ -1,6 +1,7 @@
 package walson.me.walsondev.warningsplugin;
 
 import org.bukkit.ChatColor;
+import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -29,18 +30,40 @@ public class GuiListener implements Listener {
 
         boolean isWarnsGui = title.startsWith(plugin.getWarnsTitlePrefixStripped());
         boolean isPanelGui = title.equalsIgnoreCase(plugin.getPanelTitleStripped());
+        boolean isRecentGui = title.equalsIgnoreCase(plugin.getRecentTitleStripped());
+        boolean isPlayersGui = title.equalsIgnoreCase(plugin.getPlayersTitleStripped());
+        boolean isTopGui = title.equalsIgnoreCase(plugin.getTopTitleStripped());
 
-        if (!isWarnsGui && !isPanelGui) return;
+        if (!isWarnsGui && !isPanelGui && !isRecentGui && !isPlayersGui && !isTopGui) return;
 
-        // prevent taking items / moving
         event.setCancelled(true);
 
-        if (!isPanelGui) {
-            // warns-gui is view-only
+        if (isWarnsGui) {
+            // Read-only GUI
             return;
         }
 
-        // panel GUI actions
+        if (isPanelGui) {
+            if (event.getClickedInventory() == null) return;
+            int rawSlot = event.getRawSlot();
+            if (rawSlot < 0 || rawSlot >= event.getView().getTopInventory().getSize()) return;
+
+            FileConfiguration cfg = plugin.getConfig();
+            int recentSlot = cfg.getInt("gui.panel.buttons.recent.slot", 11);
+            int playersSlot = cfg.getInt("gui.panel.buttons.players.slot", 13);
+            int topSlot = cfg.getInt("gui.panel.buttons.top.slot", 15);
+
+            if (rawSlot == recentSlot) {
+                plugin.openRecentWarnsGui(player);
+            } else if (rawSlot == playersSlot) {
+                plugin.openPlayersGui(player);
+            } else if (rawSlot == topSlot) {
+                plugin.openTopPlayersGui(player);
+            }
+            return;
+        }
+
+        // Recent / Players / Top GUIs: clicking an item opens that player's warns GUI
         ItemStack item = event.getCurrentItem();
         if (item == null || !item.hasItemMeta()) return;
 

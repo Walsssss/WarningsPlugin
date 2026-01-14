@@ -1,7 +1,9 @@
 package walson.me.walsondev.warningsplugin;
 
+import org.bukkit.ChatColor;
 import org.bukkit.command.*;
 import org.bukkit.entity.Player;
+import org.bukkit.configuration.file.YamlConfiguration;
 
 import java.util.*;
 
@@ -18,8 +20,7 @@ public class WalsonWarnCommand implements CommandExecutor, TabCompleter {
                              Command command, String label, String[] args) {
 
         if (args.length == 0) {
-            sender.sendMessage("/walsonwarn reload");
-            sender.sendMessage("/walsonwarn panel");
+            sendHelp(sender);
             return true;
         }
 
@@ -48,10 +49,35 @@ public class WalsonWarnCommand implements CommandExecutor, TabCompleter {
                 plugin.openPanelGui(p);
                 return true;
 
-            default:
-                sender.sendMessage("/walsonwarn reload");
-                sender.sendMessage("/walsonwarn panel");
+            case "help":
+                // Help is allowed for everyone
+                sendHelp(sender);
                 return true;
+
+            default:
+                sendHelp(sender);
+                return true;
+        }
+    }
+
+    private void sendHelp(CommandSender sender) {
+        YamlConfiguration msg = plugin.getMessagesConfig();
+        List<String> lines = msg.getStringList("walsonwarn-help");
+        if (lines == null || lines.isEmpty()) {
+            sender.sendMessage(ChatColor.RED + "WarningsPlugin commands:");
+            sender.sendMessage(ChatColor.YELLOW + "/warn <player> <reason>");
+            sender.sendMessage(ChatColor.YELLOW + "/warns <player>");
+            sender.sendMessage(ChatColor.YELLOW + "/removewarn <player> <n|all>");
+            sender.sendMessage(ChatColor.YELLOW + "/walsonwarn panel");
+            sender.sendMessage(ChatColor.YELLOW + "/walsonwarn reload");
+            sender.sendMessage(ChatColor.YELLOW + "/walsonwarn help");
+            return;
+        }
+
+        String prefix = msg.getString("prefix", "");
+        for (String line : lines) {
+            line = line.replace("%prefix%", prefix);
+            sender.sendMessage(ChatColor.translateAlternateColorCodes('&', line));
         }
     }
 
@@ -60,12 +86,10 @@ public class WalsonWarnCommand implements CommandExecutor, TabCompleter {
                                       Command command, String alias, String[] args) {
         if (args.length == 1) {
             List<String> subs = new ArrayList<>();
-            if ("reload".startsWith(args[0].toLowerCase(Locale.ROOT))) {
-                subs.add("reload");
-            }
-            if ("panel".startsWith(args[0].toLowerCase(Locale.ROOT))) {
-                subs.add("panel");
-            }
+            String input = args[0].toLowerCase(Locale.ROOT);
+            if ("reload".startsWith(input)) subs.add("reload");
+            if ("panel".startsWith(input)) subs.add("panel");
+            if ("help".startsWith(input)) subs.add("help");
             return subs;
         }
         return Collections.emptyList();

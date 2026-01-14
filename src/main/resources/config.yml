@@ -20,7 +20,31 @@ gui:
   warns:
     # Must be a multiple of 9 between 9 and 54
     size: 54
+
   panel:
+    size: 27
+    buttons:
+      recent:
+        slot: 11
+        material: "CLOCK"
+      players:
+        slot: 13
+        material: "BOOK"
+      top:
+        slot: 15
+        material: "PLAYER_HEAD"
+
+  recent:
     size: 54
-    recent-warns-limit: 27
-    top-warned-limit: 9
+    # How many recent warns to show (max = size)
+    limit: 45
+    material: "PAPER"
+
+  players:
+    size: 54
+    material: "PLAYER_HEAD"
+
+  top:
+    size: 54
+    limit: 45
+    material: "PLAYER_HEAD"
