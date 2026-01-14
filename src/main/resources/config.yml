@@ -1,0 +1,26 @@
+# Date format used when displaying warn timestamps
+date-format: "yyyy-MM-dd HH:mm:ss"
+
+warn:
+  title:
+    enabled: true
+    main: "&cYou have been warned!"
+    subtitle: "&7Reason: &f%reason%"
+    fade-in: 10
+    stay: 70
+    fade-out: 20
+  sound:
+    enabled: true
+    # Use any valid Bukkit Sound enum
+    name: "ENTITY_VILLAGER_NO"
+    volume: 1.0
+    pitch: 1.0
+
+gui:
+  warns:
+    # Must be a multiple of 9 between 9 and 54
+    size: 54
+  panel:
+    size: 54
+    recent-warns-limit: 27
+    top-warned-limit: 9

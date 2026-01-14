@@ -1,4 +1,59 @@
 name: WarningsPlugin
 version: '${version}'
 main: walson.me.walsondev.warningsplugin.WarningsPlugin
-api-version: '1.20'
+api-version: '1.21'
+author: Walson
+description: Simple warning system with GUIs
+
+commands:
+  warn:
+    description: Warn a player
+    usage: "/warn <player> <reason>"
+    permission: walsonwarn.warn
+  warns:
+    description: View warnings of a player (GUI)
+    usage: "/warns <player>"
+    permission: walsonwarn.warns
+  removewarn:
+    description: Remove a warning from a player
+    usage: "/removewarn <player> <number|all>"
+    permission: walsonwarn.removewarn
+  walsonwarn:
+    description: Admin command for the warnings plugin
+    usage: "/walsonwarn <reload|panel>"
+
+permissions:
+  walsonwarn.*:
+    description: Gives access to all warnings commands
+    default: op
+    children:
+      walsonwarn.warn: true
+      walsonwarn.warns: true
+      walsonwarn.removewarn: true
+      walsonwarn.reload: true
+      walsonwarn.panel: true
+      walsonwarn.see: true
+
+  walsonwarn.warn:
+    description: Use /warn
+    default: op
+
+  walsonwarn.warns:
+    description: Use /warns
+    default: op
+
+  walsonwarn.removewarn:
+    description: Use /removewarn
+    default: op
+
+  walsonwarn.reload:
+    description: Use /walsonwarn reload
+    default: op
+
+  walsonwarn.panel:
+    description: Use /walsonwarn panel
+    default: op
+
+  walsonwarn.see:
+    description: See warn broadcasts
+    default: op

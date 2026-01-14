@@ -1,0 +1,28 @@
+prefix: "&8[&cWarnings&8] "
+
+no-permission: "%prefix%&cYou don't have permission to do that."
+player-only: "%prefix%&cThis command can only be used by players."
+player-not-found: "%prefix%&cPlayer &e%player% &cwas not found."
+usage-warn: "%prefix%&cUsage: &e/warn <player> <reason>"
+usage-warns: "%prefix%&cUsage: &e/warns <player>"
+usage-removewarn: "%prefix%&cUsage: &e/removewarn <player> <number|all>"
+
+no-warns: "%prefix%&e%player% &ahas no warnings."
+warn-success: "%prefix%&aYou warned &e%player% &afor: &e%reason%"
+warn-notify: "%prefix%&e%staff% &cwarned &e%player% &cfor: &e%reason%"
+warn-received: "%prefix%&cYou have been warned for: &e%reason%"
+
+remove-warn-success: "%prefix%&aRemoved warning &e#%number% &afrom &e%player%&a."
+remove-warn-all-success: "%prefix%&aRemoved &eall &awarnings from &e%player%&a."
+invalid-warn-number: "%prefix%&cInvalid warning number."
+
+no-warnings-data: "%prefix%&cThere is no warning data yet."
+reload-success: "%prefix%&aConfiguration and messages reloaded."
+
+gui:
+  warns-title: "&8Warnings &7» &c%player%"
+  panel-title: "&8Warnings Panel"
+
+  recent-warns-name: "&6Recent Warnings"
+  top-warned-name: "&6Top Warned Players"
+  open-warns-hint: "&7Click to open this player's warns."
