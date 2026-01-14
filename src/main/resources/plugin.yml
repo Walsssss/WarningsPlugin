@@ -1,0 +1,4 @@
+name: WarningsPlugin
+version: '${version}'
+main: walson.me.walsondev.warningsplugin.WarningsPlugin
+api-version: '1.20'
