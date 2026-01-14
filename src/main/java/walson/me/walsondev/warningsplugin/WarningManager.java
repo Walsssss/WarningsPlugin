@@ -84,19 +84,30 @@ public class WarningManager {
         String listPath = base + ".warnings";
         List<Map<?, ?>> list = config.getMapList(listPath);
         for (Map<?, ?> m : list) {
-            String reason = String.valueOf(m.getOrDefault("reason", "No reason"));
+            // reason
+            Object reasonObj = m.get("reason");
+            String reason = (reasonObj != null) ? String.valueOf(reasonObj) : "No reason";
+
+            // timestamp
             long timestamp;
             try {
                 Object tsObj = m.get("timestamp");
                 if (tsObj instanceof Number) {
                     timestamp = ((Number) tsObj).longValue();
-                } else {
+                } else if (tsObj != null) {
                     timestamp = Long.parseLong(String.valueOf(tsObj));
+                } else {
+                    timestamp = System.currentTimeMillis();
                 }
             } catch (Exception e) {
                 timestamp = System.currentTimeMillis();
             }
-            String warnerName = String.valueOf(m.getOrDefault("warnerName", "Unknown"));
+
+            // warner name
+            Object warnerNameObj = m.get("warnerName");
+            String warnerName = (warnerNameObj != null) ? String.valueOf(warnerNameObj) : "Unknown";
+
+            // warner UUID
             UUID warnerUuid = null;
             Object wu = m.get("warnerUuid");
             if (wu != null) {
