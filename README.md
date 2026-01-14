@@ -16,10 +16,6 @@ Author: Walson
 
 Permissions can be found on [here](https://github.com/Walsssss/WarningsPlugin/blob/main/src/main/resources/plugin.yml)
 
-# Walson Warnings Plugin
-
-
-
 - No automatic punishments – **purely informational** for staff and players.
 - GUI-based browsing for staff, console-friendly text output for logs.
 - All data stored in a single, readable `warnings.yml` file. No Database needed. 
