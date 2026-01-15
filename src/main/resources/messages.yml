@@ -9,7 +9,7 @@ usage-removewarn: "%prefix%&cUsage: &e/removewarn <player> <number|all>"
 
 no-warns: "%prefix%&e%player% &7has no warnings."
 warn-success: "%prefix%&7You warned &e%player% &7for: &e%reason%"
-warn-notify: "%prefix%&e%staff% &7has warned &e%player% &7for: &c%reason%"
+warn-notify: "   &c%staff% &7has warned &c%player% &7for: &c%reason%"
 warn-received: "%prefix%&cYou have been warned for: &e%reason%"
 
 warns-header: "%prefix%&eWarnings for &c%player% &7(&f%count% total&7):"
