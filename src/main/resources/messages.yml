@@ -1,4 +1,4 @@
-prefix: "&8[&cWarnings&8] "
+prefix: "&8[&8&lWARNINGS&8] "
 
 no-permission: "%prefix%&cYou don't have permission to do that."
 player-only: "%prefix%&cThis command can only be used by players."
@@ -7,9 +7,9 @@ usage-warn: "%prefix%&cUsage: &e/warn <player> <reason>"
 usage-warns: "%prefix%&cUsage: &e/warns <player>"
 usage-removewarn: "%prefix%&cUsage: &e/removewarn <player> <number|all>"
 
-no-warns: "%prefix%&e%player% &ahas no warnings."
-warn-success: "%prefix%&aYou warned &e%player% &afor: &e%reason%"
-warn-notify: "%prefix%&e%staff% &cwarned &e%player% &cfor: &e%reason%"
+no-warns: "%prefix%&e%player% &7has no warnings."
+warn-success: "%prefix%&7You warned &e%player% &7for: &e%reason%"
+warn-notify: "%prefix%&e%staff% &7has warned &e%player% &7for: &c%reason%"
 warn-received: "%prefix%&cYou have been warned for: &e%reason%"
 
 warns-header: "%prefix%&eWarnings for &c%player% &7(&f%count% total&7):"
@@ -24,12 +24,14 @@ no-warnings-data: "%prefix%&cThere is no warning data yet."
 reload-success: "%prefix%&aConfiguration and messages reloaded."
 
 walsonwarn-help:
-  - "%prefix%&e/warn <player> <reason> &7- Warn a player."
-  - "%prefix%&e/warns <player> &7- View a player's warnings."
-  - "%prefix%&e/removewarn <player> <n|all> &7- Remove warnings."
-  - "%prefix%&e/walsonwarn panel &7- Open the warnings panel GUI."
-  - "%prefix%&e/walsonwarn reload &7- Reload config and messages."
-  - "%prefix%&e/walsonwarn help &7- Show this help."
+  - "&8→ &8&lWALSON WARNINGS PLUGINS"
+  - "&8→ &e/warn <player> <reason> &7- Warn a player."
+  - "&8→ &e/warns <player> &7- View a player's warnings."
+  - "&8→ &e/removewarn <player> <n|all> &7- Remove warnings."
+  - "&8→ &e/walsonwarn panel &7- Open the warnings panel GUI."
+  - "&8→ &e/walsonwarn reload &7- Reload config and messages."
+  - "&8→ &e/walsonwarn help &7- Show this help."
+  - "&8→ &8&lAuthor: &9https://github.com/Walsssss"
 
 gui:
   warns-title: "&8Warnings &7» &c%player%"
